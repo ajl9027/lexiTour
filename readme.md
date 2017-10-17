@@ -1,20 +1,18 @@
 LexiTour: Basic Brackets Tournament Site with nodeJs, Express, Jade and jQuery Bracket
 =======================================================================
 jQuery Bracket: http://www.aropupu.fi/bracket/
-:
-Run npm install in console to install dependencies:
-:
+---
+Run `npm install` in console to install dependencies:
 All dependencies will be downloaded by `npm` to `node_modules` folder.
 ---
-Run 'node app.js' to start server at port 3000.
-:
+Run 'node app.js' to start server at port 3000:
 Open `http://localhost:3000` to access Site.
 ---
 ToDo:
-    Add comments
-    Make methods reusable
-    Use .promises
-    Move jQuery scripts to seperate folder
+* Add comments
+* Make methods reusable
+* Use .promises
+* Move jQuery scripts to seperate folder
 ---
 Caveats:
  Tournaments can be started by
