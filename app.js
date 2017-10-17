@@ -59,11 +59,9 @@ app.post('/filelist',function(req,res, next){
 		function(files) {
 		  console.log("files are", files);
 		  res.send(files);
-		  //next();
 		},
 		function(error) {
 		  console.error("something exploded", error);
-		  //next();
 		}
 	  );
   });
