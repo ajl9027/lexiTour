@@ -1,0 +1,203 @@
+extend layout
+
+block content
+  .main
+    #lexToure
+      h3
+        | Lexicon Tournament
+        a(href='#minimal')
+      script(type='text/javascript').
+        var minimalData = {
+        teams : [
+        [null, null], /* first matchup */
+        [null, null],
+        [null, null],
+        [null, null]
+        ],
+        results : []
+        }
+        /* If you call doneCb([value], true), the next edit will be automatically
+        activated. This works only in the first round. */
+        function acEditFn(container, data, doneCb) {
+        var input = $('<input type="text">')
+        input.val(data)
+        //input.autocomplete({ source: acData })
+        input.blur(function() { doneCb(input.val(),false) })
+        input.keyup(function(e) { if ((e.keyCode||e.which)===13) input.blur() })
+        container.html(input)
+        input.focus()
+        }
+        function acRenderFn(container, data, score, state) {
+        console.log('container :' + container);
+        console.log('data :' + data);
+        console.log('score :' + score);
+        console.log('state :' + state);
+        //::::::::::::::::::::::::::::::
+        switch(state) {
+        case 'empty-bye':
+        container.append('Deltagare Saknas')
+        return;
+        case 'empty-tbd':
+        container.append('Inväntar Resultat')
+        return;
+        case 'entry-no-score':
+        case 'entry-default-win':
+        case 'entry-complete':
+        var fields = data.split(':')
+        if (fields.length != 2)
+        container.append(data)
+        else
+        container.append('<img src="site/png/'+fields[0]+'.png"> ').append(fields[1])
+        return;
+        }
+        }
+        function saveFn(data, userData) {
+        console.log('send json data: ' + data);
+        console.log('send json userdata: ' + userData);
+        var jsonData = {};
+        jsonData.data = data;
+        jsonData.filename = userData;
+        $.ajax({
+        type: 'POST',
+        data: JSON.stringify(jsonData),
+        contentType: 'application/json',
+        url: 'http://localhost:3000/json',
+        success: function(data) {
+        console.log('success');
+        console.log(JSON.stringify(data));
+        }
+        });
+        };
+      script(type='text/javascript').
+        $(document).ready(function() {
+        $('#select_newTour').click(function() {
+        console.log('Initzialing Tournament');
+        console.log(minimalData);
+        let tourName = prompt('Vänligen skriv in turnerningens namn');
+        if(tourName.length < 1) {
+        $('#lexToure').find('h3').text('Lexicon Tournament');      
+        }else{
+        $('#lexToure').find('h3').text(tourName);
+        };        
+        $('#lexToure .tour').bracket({
+        teamWidth: 120,
+        scoreWidth: 20,
+        matchMargin: 10,
+        roundMargin: 50,
+        save: function(){},
+        decorator: {edit: acEditFn,
+        render: acRenderFn},
+        centerConnectors: false,
+        save: saveFn,
+        userData: $('#lexToure').find('h3').text(),
+        init: minimalData })
+        });
+        });
+      .tour
+
+block sidebar
+  .widget
+    h1 
+      div#div_newTour
+       a#select_newTour(href='#') Start New Tournament?
+
+    h1 
+      div#div_customList
+       a#select_customList(href='#') Import CSV file?
+
+    h1 
+      div#div_fileList
+       a#select_fileList(href='#') Import saved tournament?
+
+    script(type='text/javascript').
+      $(function(){
+      $(document).ready(function() {
+      $('#select_customList').click(function (e) {
+      console.log($('CustomList clicked: ' + this));
+      let csvFile = {};
+      let csvPromt = prompt('Vänligen skriv namn på csv fil');
+      csvFile.name = csvPromt;
+      $.ajax('http://localhost:3000/customList', {
+      type: 'POST',
+      crossDomain: true,
+      data: JSON.stringify(csvFile),
+      contentType: 'application/json',   
+      success: function(data) {
+      console.log('CSV connected: ' + data);
+      console.log(data);
+      var teams = data
+      console.log('Teams arrays loaded: ' + teams);
+      $('#lexToure').find('h3').text(csvFile.name);
+      $('#lexToure .tour').bracket({
+      teamWidth: 120,
+      scoreWidth: 20,
+      matchMargin: 10,
+      roundMargin: 50,
+      save: function(){},
+      decorator: {edit: acEditFn,
+      render: acRenderFn},
+      centerConnectors: false,
+      save: saveFn,
+      userData: $('#lexToure').find('h3').text(),
+      init: teams 
+      });
+      },
+      error  : function(data) { console.log('CSV not found:' + JSON.stringify(data.responseText));}  
+      });
+      });
+      $('#select_fileList').click(function (e) {
+      //e.getPreventDefault();
+      $.ajax('http://localhost:3000/filelist', {
+      type: 'POST',
+      crossDomain: true,
+      contentType: 'application/json',
+      success: function(data) {
+      $.each(data, function(index, val) {
+      console.log('SavedGames List ' + val + ' Index: ' + index);
+      var list = $('<p '+'id='+ index + '>' + '<a href=#>'+ val + '</a>' + '</p>');
+      //$('#select_fileslist').prepend(list);
+      list.appendTo($('#div_fileList'));
+      $('#select_filelist').fadeOut();
+      $('#select_fileList').remove();
+      $(list).fadeIn();
+      console.log(list);
+      $('#'+index).click(function(){
+      //e.getPreventDefault()
+      console.log('select_link clicked');
+      console.log('this is: ' + $(this).text());
+      let fileName = {};
+      //let filePromt = prompt('Vänligen skriv namn på sparad turnering, sökväg exkluderat');
+      console.log(fileName);
+      fileName.name = $(this).text();
+      $.ajax('http://localhost:3000/file', {
+      type: 'POST',
+      crossDomain: true,
+      data: JSON.stringify(fileName),
+      contentType: 'application/json',
+      success: function(data) {
+      console.log(JSON.stringify(data));
+      $('#lexToure').find('h3').text(fileName.name);
+      $('#lexToure .tour').bracket({
+      teamWidth: 120,
+      scoreWidth: 20,
+      matchMargin: 10,
+      roundMargin: 50,
+      save: function(){},
+      decorator: {edit: acEditFn,
+      render: acRenderFn},
+      centerConnectors: false,
+      save: saveFn,
+      userData: $('#lexToure').find('h3').text(),
+      init: data 
+      });
+      },
+      error  : function() { console.log('File not found');}
+      });
+      });
+      });
+      },
+      error  : function() { console.log('File list not found');}
+      });
+      });
+      });
+      });
